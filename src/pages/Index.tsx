@@ -52,7 +52,7 @@ const Index = () => {
       <Navbar />
       
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-walletwise-purple to-walletwise-light-purple text-white py-20">
+      <section className="bg-gradient-to-r from-walletwise-purple to-walletwise-light-purple text-white py-20 flex flex-col items-center justify-center min-h-screen">
         <div className="container mx-auto px-6 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Take Control of Your Finances</h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
