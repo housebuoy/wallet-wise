@@ -18,6 +18,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { LockKeyhole, Mail, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { auth, googleProvider, githubAuthProvider } from "@/firebaseConfig";
+import { signInWithEmailAndPassword, signInWithPopup } from "firebase/auth"
 
 const formSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -25,10 +27,13 @@ const formSchema = z.object({
   rememberMe: z.boolean().default(false),
 });
 
+
 export default function Login() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
+
+  
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -41,17 +46,19 @@ export default function Login() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
+  
     try {
-      // Here we would normally handle authentication
-      // For now, we'll just simulate a successful login
-      console.log("Login form values:", values);
-      
+      // Authenticate user with Firebase
+      const userCredential = await signInWithEmailAndPassword(auth, values.email, values.password);
+      const user = userCredential.user;
+  
+      console.log("Logged in user:", user);
+  
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      
+  
       // Redirect to dashboard after successful login
       navigate("/dashboard");
     } catch (error) {
@@ -59,12 +66,67 @@ export default function Login() {
       toast({
         variant: "destructive",
         title: "Login failed",
-        description: "Invalid email or password. Please try again.",
+        description: error.message || "Invalid email or password. Please try again.",
       });
     } finally {
       setIsLoading(false);
     }
   }
+
+  async function handleGoogleLogin() {
+    setIsLoading(true);
+  
+    try {
+      const userCredential = await signInWithPopup(auth, googleProvider);
+      const user = userCredential.user;
+  
+      console.log("Google Login User:", user);
+  
+      toast({
+        title: "Welcome back!",
+        description: `Hello, ${user.displayName}! You have successfully logged in.`,
+      });
+  
+      // Redirect to dashboard or homepage after login
+      navigate("/dashboard");
+    } catch (error) {
+      console.error("Google Login Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Google Login Failed",
+        description: error.message || "An error occurred while logging in with Google.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleGithubLogin() {
+    setIsLoading(true);
+    try{
+      const userCredential = await signInWithPopup(auth, githubAuthProvider)
+      const user = userCredential.user;
+
+      console.log("Github Login User:", user);
+
+      toast({
+        title: "Welcome back!",
+        description: `Hello, ${user.displayName}! You have successfully logged in.`,
+      });
+      navigate("/dashboard");
+    }
+    catch(error){
+      console.error("Github Login Error:", error);
+      toast({
+        variant: "destructive",
+        title: "Github Login Failed",
+        description: error.message || "An error occurred while logging in with Github.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -169,11 +231,11 @@ export default function Login() {
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Button variant="outline" type="button" disabled={isLoading}>
+              <Button variant="outline" type="button" onClick={handleGoogleLogin} disabled={isLoading}>
                 Google
               </Button>
-              <Button variant="outline" type="button" disabled={isLoading}>
-                Apple
+              <Button variant="outline" type="button" onClick={handleGithubLogin} disabled={isLoading}>
+                Github
               </Button>
             </div>
           </div>

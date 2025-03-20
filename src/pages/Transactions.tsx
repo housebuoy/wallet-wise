@@ -1,5 +1,5 @@
-
-import { useState } from "react";
+import { useState, useContext, useEffect } from "react";
+import AuthContext from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,32 +10,101 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Search, Filter, Plus, Download, ArrowUpDown, CreditCard, Wallet, DollarSign, RefreshCw } from "lucide-react";
+import { FaCaretUp, FaCaretDown } from "react-icons/fa";
+import axios from "axios";
+import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
 
 const Transactions = () => {
   const [transactionType, setTransactionType] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newTransactionType, setNewTransactionType] = useState("expense");
-
+  const [description, setDescription] = useState("");
+  const [amount, setAmount] = useState("");
+  const [category, setCategory] = useState("");
+  const [date, setDate] = useState("");
+  const [account, setAccount] = useState("");
+  const { toast } = useToast();
   // Sample transaction data
-  const transactions = [
-    { id: 1, name: "Grocery Store", amount: -125.30, date: "2023-05-15", category: "Groceries", type: "expense", account: "Chase Credit Card" },
-    { id: 2, name: "Salary Deposit", amount: 2600.00, date: "2023-05-14", category: "Income", type: "income", account: "Checking Account" },
-    { id: 3, name: "Electric Bill", amount: -89.99, date: "2023-05-12", category: "Utilities", type: "expense", account: "Wells Fargo" },
-    { id: 4, name: "Coffee Shop", amount: -4.50, date: "2023-05-11", category: "Dining", type: "expense", account: "Debit Card" },
-    { id: 5, name: "Freelance Payment", amount: 450.00, date: "2023-05-10", category: "Income", type: "income", account: "Checking Account" },
-    { id: 6, name: "Internet Bill", amount: -79.99, date: "2023-05-09", category: "Utilities", type: "expense", account: "Bank of America" },
-    { id: 7, name: "Movie Tickets", amount: -32.50, date: "2023-05-07", category: "Entertainment", type: "expense", account: "Amex Gold" },
-    { id: 8, name: "Gas Station", amount: -45.67, date: "2023-05-06", category: "Transportation", type: "expense", account: "Chase Credit Card" },
-    { id: 9, name: "Side Project", amount: 350.00, date: "2023-05-05", category: "Income", type: "income", account: "Checking Account" },
-    { id: 10, name: "Restaurant", amount: -87.45, date: "2023-05-03", category: "Dining", type: "expense", account: "Visa Card" },
-    { id: 11, name: "Mobile Phone", amount: -65.00, date: "2023-05-02", category: "Utilities", type: "expense", account: "Bank of America" },
-    { id: 12, name: "Interest Payment", amount: 12.50, date: "2023-05-01", category: "Income", type: "income", account: "Savings Account" },
-  ];
+  const [transactions, setTransactions] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const transactionsPerPage = 10;
+
+  const auth = useContext(AuthContext);
+  const {user} = auth
+
+  useEffect(() => {
+    if (!user) return; // Ensure user is authenticated before fetching
+
+    const fetchTransactions = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+        setTransactions(response.data); // Set the fetched transactions
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      }
+    };
+
+    fetchTransactions();
+  }, [user, transactions]);
 
   // Filter transactions based on the selected type
-  const filteredTransactions = transactionType === "all" 
-    ? transactions 
-    : transactions.filter(transaction => transaction.type === transactionType);
+  const filteredTransactions = transactions
+  .filter(transaction => 
+    transactionType === "all" || transaction.type === transactionType
+  )
+  .filter(transaction =>
+    transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    transaction.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    transaction.account.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const startIndex = (currentPage - 1) * transactionsPerPage;
+  const endIndex = startIndex + transactionsPerPage;
+
+  const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
+
+
+    const submitTransactions = async () => {
+      if (!user || !user.uid) {
+        alert("User not authenticated!");
+        return;
+      }
+      
+      try {
+        const transactionData = {
+          userId: user.uid,
+          transactionId: "TXN-"+uuidv4(), 
+          type: newTransactionType,
+          description,
+          amount: parseFloat(amount), // Convert to number
+          category,
+          date,
+          account,
+        };
+        const API_URL = "http://localhost:5000/api/transactions"
+        console.log(transactionData)
+        const response = await axios.post(API_URL, transactionData);
+        
+        toast({
+          title: "Transaction created!",
+          description: `Your Transaction added successfully!`,
+        });
+        console.log(response.data);
+        setIsDialogOpen(false);
+      } catch (error) {
+        console.error("Error adding transaction:", error);
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.message || "Your transaction wasn't created, Please try again",
+        });
+      }
+    };
+    
 
   return (
     <DashboardLayout>
@@ -66,9 +135,13 @@ const Transactions = () => {
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="relative flex items-center">
                     <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input placeholder="Search transactions..." className="pl-8 w-full sm:w-[200px] lg:w-[300px]" />
-                  </div>
-                  
+                    <Input
+                      placeholder="Search transactions..."
+                      className="pl-8 w-full sm:w-[200px] lg:w-[300px]"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                  </div>                  
                   <Select value={transactionType} onValueChange={setTransactionType}>
                     <SelectTrigger className="w-full sm:w-[150px]">
                       <div className="flex items-center">
@@ -88,7 +161,7 @@ const Transactions = () => {
             <CardContent>
               <div className="rounded-md border">
                 <div className="relative w-full overflow-auto">
-                  <table className="w-full caption-bottom text-sm">
+                <table className="w-full caption-bottom text-sm">
                     <thead className="bg-muted/50">
                       <tr className="border-b transition-colors">
                         <th className="h-12 px-4 text-left align-middle font-medium">
@@ -119,23 +192,26 @@ const Transactions = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {filteredTransactions.map((transaction) => (
+                      {paginatedTransactions.map((transaction) => (
                         <tr key={transaction.id} className="border-b transition-colors hover:bg-muted/50">
                           <td className="p-4 align-middle">
                             <div className="flex items-center">
-                              <div className={`p-2 rounded-full mr-3 ${transaction.amount > 0 ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
-                                {transaction.amount > 0 
-                                  ? <DollarSign className="h-4 w-4" /> 
-                                  : <CreditCard className="h-4 w-4" />}
+                              <div className={`p-2 rounded-md mr-3 ${transaction.type === "income" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
+                                {transaction.type === "income" ? (
+                                  <FaCaretUp className="h-5 w-5 text-emerald-600" />
+                                ) : (
+                                  <FaCaretDown className="h-5 w-5 text-rose-600" />
+                                )}
                               </div>
-                              <span>{transaction.name}</span>
+                              <span>{transaction.description}</span>
                             </div>
                           </td>
                           <td className="p-4 align-middle">{transaction.category}</td>
                           <td className="p-4 align-middle">{transaction.account}</td>
-                          <td className="p-4 align-middle">{transaction.date}</td>
-                          <td className={`p-4 align-middle text-right font-medium ${transaction.amount > 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {transaction.amount > 0 ? '+' : ''}{transaction.amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })}
+                          <td className="p-4 align-middle">{transaction.date ? format(new Date(transaction.date), 'dd/MM/yyyy') : 'N/A'}</td>
+                          <td className={`p-4 align-middle text-right font-medium ${transaction.amount > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                            {transaction.amount > 0 ? "+" : ""}
+                            {transaction.amount.toLocaleString("en-US", { style: "currency", currency: "GHS" })}
                           </td>
                         </tr>
                       ))}
@@ -144,6 +220,27 @@ const Transactions = () => {
                 </div>
               </div>
             </CardContent>
+            <div className="flex justify-between items-center mb-4 mx-6">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {currentPage} of {Math.ceil(transactions.length / transactionsPerPage)}
+              </span>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(transactions.length / transactionsPerPage)))}
+                disabled={currentPage === Math.ceil(transactions.length / transactionsPerPage)}
+                className="px-4 py-2 bg-gray-200 rounded-md disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
           </Card>
         </div>
       </div>
@@ -181,45 +278,54 @@ const Transactions = () => {
             
             <div className="grid gap-2">
               <Label htmlFor="description">Description</Label>
-              <Input id="description" placeholder="Enter a description" />
+              <Input id="description" placeholder="Enter a description"value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
             
             <div className="grid gap-2">
               <Label htmlFor="amount">Amount</Label>
               <div className="relative">
                 <DollarSign className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input id="amount" type="number" className="pl-8" placeholder="0.00" />
+                <Input id="amount" type="number" className="pl-8" placeholder="0.00" value={amount} onChange={(e) => setAmount(e.target.value)}/>
               </div>
             </div>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="category">Category</Label>
-                <Select>
+                <Select onValueChange={setCategory}>
                   <SelectTrigger id="category">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="groceries">Groceries</SelectItem>
-                    <SelectItem value="dining">Dining</SelectItem>
+                    <SelectItem value="housing">Housing</SelectItem>
+                    <SelectItem value="food">Food & Dining</SelectItem>
+                    <SelectItem value="transportation">Transportation</SelectItem>
                     <SelectItem value="utilities">Utilities</SelectItem>
                     <SelectItem value="entertainment">Entertainment</SelectItem>
-                    <SelectItem value="transportation">Transportation</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="shopping">Shopping</SelectItem>
+                    <SelectItem value="health">Health & Fitness</SelectItem>
+                    <SelectItem value="personal">Personal Care</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="travel">Travel</SelectItem>
+                    <SelectItem value="debt">Debt Payments</SelectItem>
+                    <SelectItem value="savings">Savings</SelectItem>
+                    <SelectItem value="gifts">Gifts & Donations</SelectItem>
+                    <SelectItem value="subscriptions">Subscriptions</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem> 
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="grid gap-2">
                 <Label htmlFor="date">Date</Label>
-                <Input id="date" type="date" />
+                <Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
               </div>
             </div>
             
             <div className="grid gap-2">
               <Label htmlFor="account">Account</Label>
-              <Select>
+              <Select onValueChange={setAccount}>
                 <SelectTrigger id="account">
                   <SelectValue placeholder="Select account" />
                 </SelectTrigger>
@@ -236,7 +342,7 @@ const Transactions = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => setIsDialogOpen(false)}>Add Transaction</Button>
+            <Button onClick={submitTransactions}>Add Transaction</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -18,6 +18,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Checkbox } from "@/components/ui/checkbox";
 import { LockKeyhole, Mail, User, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
+import { auth, googleProvider, githubAuthProvider } from "@/firebaseConfig";
+import { createUserWithEmailAndPassword, updateProfile, signInWithPopup, getIdToken  } from "firebase/auth"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -50,30 +53,120 @@ export default function Signup() {
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
-    
+  
+    const API_URL = "http://localhost:5000/api/users";
     try {
-      // Here we would normally handle user registration
-      // For now, we'll just simulate a successful signup
-      console.log("Signup form values:", values);
+      // Create user in Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userId = await getIdToken(userCredential.user);
+      const email = userCredential.user.email;
+      const name = values.name;
+  
+      // Update user profile with display name
+      await updateProfile(userCredential.user, {
+        displayName: values.name,
+      });
       
+      console.log("Data being sent to API:", {
+        userId,
+        name,
+        email,
+      });
+      
+      await axios.post(API_URL, {
+        userId,
+        name,
+        email,
+      });
+  
+      console.log("User successfully signed up & stored in DB!");
+  
       toast({
         title: "Account created!",
         description: "Welcome to WalletWise. You can now log in.",
       });
-      
-      // Redirect to login page after successful signup
+  
+      // Redirect after successful signup
       navigate("/login");
     } catch (error) {
       console.error("Signup error:", error);
       toast({
         variant: "destructive",
         title: "Signup failed",
-        description: "There was a problem creating your account. Please try again.",
+        description: error.message || "There was a problem creating your account. Please try again.",
       });
     } finally {
       setIsLoading(false);
     }
   }
+
+  async function handleGoogleSignup() {
+      setIsLoading(true);
+    
+      try {
+        const userCredential = await signInWithPopup(auth, googleProvider);
+        const user = userCredential.user;
+
+        const userData = {
+          userId: user.uid,
+          name: user.displayName || "No Name",
+          email: user.email,
+          phoneNumber: user.phoneNumber || "",
+        };
+
+        await axios.post("http://localhost:5000/api/users", userData);
+    
+        console.log("Google Signup User:", user);
+    
+        toast({
+          title: "Account created!",
+          description: `Welcome, ${user.displayName}! You have successfully signed up.`,
+        });
+    
+        // Redirect to dashboard or login after signup
+        navigate("/dashboard");
+      } catch (error) {
+        console.error("Google Signup Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Google Signup Failed",
+          description: error.message || "An error occurred while signing up with Google.",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    async function handleGitHubSignup() {
+      try {
+        const userCredential = await signInWithPopup(auth, githubAuthProvider);
+        const user = userCredential.user;
+        console.log("User Info:", user);
+
+        const userData = {
+          userId: user.uid,
+          name: user.displayName || "GitHub User",
+          email: user.email,
+          phoneNumber: user.phoneNumber || "", 
+        };
+
+        await axios.post("http://localhost:5000/api/users", userData);
+
+        toast({
+          title: "Welcome!",
+          description: `Signed in as ${user.displayName || user.email}`,
+        });
+    
+        navigate("/dashboard"); // Redirect to dashboard after login
+      } catch (error) {
+        console.error("GitHub Sign-In Error:", error);
+        toast({
+          variant: "destructive",
+          title: "Authentication failed",
+          description: error.message || "Unable to sign in with GitHub.",
+        });
+      }
+    }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -229,11 +322,11 @@ export default function Signup() {
               </div>
             </div>
             <div className="mt-4 grid grid-cols-2 gap-3">
-              <Button variant="outline" type="button" disabled={isLoading}>
+              <Button variant="outline" type="button" onClick={handleGoogleSignup} disabled={isLoading}>
                 Google
               </Button>
-              <Button variant="outline" type="button" disabled={isLoading}>
-                Apple
+              <Button variant="outline" type="button" onClick={handleGitHubSignup} disabled={isLoading}>
+                Github
               </Button>
             </div>
           </div>
