@@ -1,4 +1,3 @@
-
 import { useState, useContext, useEffect } from "react";
 import AuthContext from "@/context/AuthContext";
 import { DashboardLayout } from "@/components/DashboardLayout";
@@ -14,6 +13,10 @@ import { Search, Filter, Plus, Download, ArrowUpDown, CreditCard, Wallet, Dollar
 import { FaCaretUp, FaCaretDown } from "react-icons/fa";
 import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
+import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+
+
 const Transactions = () => {
   const [transactionType, setTransactionType] = useState("all");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -23,7 +26,7 @@ const Transactions = () => {
   const [category, setCategory] = useState("");
   const [date, setDate] = useState("");
   const [account, setAccount] = useState("");
-
+  const { toast } = useToast();
   // Sample transaction data
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -46,7 +49,7 @@ const Transactions = () => {
     };
 
     fetchTransactions();
-  }, [user]);
+  }, [user, transactions]);
 
   // Filter transactions based on the selected type
   const filteredTransactions = transactions
@@ -74,7 +77,7 @@ const Transactions = () => {
       try {
         const transactionData = {
           userId: user.uid,
-          transactionId: uuidv4(), 
+          transactionId: "TXN-"+uuidv4(), 
           type: newTransactionType,
           description,
           amount: parseFloat(amount), // Convert to number
@@ -86,12 +89,19 @@ const Transactions = () => {
         console.log(transactionData)
         const response = await axios.post(API_URL, transactionData);
         
-        alert("Transaction added successfully!");
+        toast({
+          title: "Transaction created!",
+          description: `Your Transaction added successfully!`,
+        });
         console.log(response.data);
         setIsDialogOpen(false);
       } catch (error) {
         console.error("Error adding transaction:", error);
-        alert("Failed to add transaction!");
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.message || "Your transaction wasn't created, Please try again",
+        });
       }
     };
     
@@ -198,7 +208,7 @@ const Transactions = () => {
                           </td>
                           <td className="p-4 align-middle">{transaction.category}</td>
                           <td className="p-4 align-middle">{transaction.account}</td>
-                          <td className="p-4 align-middle">{transaction.date}</td>
+                          <td className="p-4 align-middle">{transaction.date ? format(new Date(transaction.date), 'dd/MM/yyyy') : 'N/A'}</td>
                           <td className={`p-4 align-middle text-right font-medium ${transaction.amount > 0 ? "text-emerald-600" : "text-rose-600"}`}>
                             {transaction.amount > 0 ? "+" : ""}
                             {transaction.amount.toLocaleString("en-US", { style: "currency", currency: "GHS" })}
@@ -288,12 +298,21 @@ const Transactions = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="groceries">Groceries</SelectItem>
-                    <SelectItem value="dining">Dining</SelectItem>
+                    <SelectItem value="housing">Housing</SelectItem>
+                    <SelectItem value="food">Food & Dining</SelectItem>
+                    <SelectItem value="transportation">Transportation</SelectItem>
                     <SelectItem value="utilities">Utilities</SelectItem>
                     <SelectItem value="entertainment">Entertainment</SelectItem>
-                    <SelectItem value="transportation">Transportation</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
+                    <SelectItem value="shopping">Shopping</SelectItem>
+                    <SelectItem value="health">Health & Fitness</SelectItem>
+                    <SelectItem value="personal">Personal Care</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="travel">Travel</SelectItem>
+                    <SelectItem value="debt">Debt Payments</SelectItem>
+                    <SelectItem value="savings">Savings</SelectItem>
+                    <SelectItem value="gifts">Gifts & Donations</SelectItem>
+                    <SelectItem value="subscriptions">Subscriptions</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem> 
                   </SelectContent>
                 </Select>
               </div>
