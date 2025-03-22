@@ -49,7 +49,7 @@ const Transactions = () => {
     };
 
     fetchTransactions();
-  }, [user, transactions]);
+  }, [user]);
 
   // Filter transactions based on the selected type
   const filteredTransactions = transactions
@@ -68,42 +68,57 @@ const Transactions = () => {
   const paginatedTransactions = filteredTransactions.slice(startIndex, endIndex);
 
 
-    const submitTransactions = async () => {
-      if (!user || !user.uid) {
-        alert("User not authenticated!");
-        return;
-      }
-      
-      try {
-        const transactionData = {
-          userId: user.uid,
-          transactionId: "TXN-"+uuidv4(), 
-          type: newTransactionType,
-          description,
-          amount: parseFloat(amount), // Convert to number
-          category,
-          date,
-          account,
-        };
-        const API_URL = "http://localhost:5000/api/transactions"
-        console.log(transactionData)
-        const response = await axios.post(API_URL, transactionData);
-        
-        toast({
-          title: "Transaction created!",
-          description: `Your Transaction added successfully!`,
-        });
-        console.log(response.data);
-        setIsDialogOpen(false);
-      } catch (error) {
-        console.error("Error adding transaction:", error);
+  const submitTransactions = async () => {
+    if (!user || !user.uid) {
+      alert("User not authenticated!");
+      return;
+    }
+  
+    const transactionData = {
+      userId: user.uid,
+      transactionId: "TXN-" + uuidv4(),
+      type: newTransactionType,
+      description,
+      amount: parseFloat(amount),
+      category,
+      date,
+      account,
+    };
+  
+    console.log("Transaction Data to be sent:", transactionData);
+  
+    try {
+      const API_URL = "http://localhost:5000/api/transactions";
+      const response = await axios.post(API_URL, transactionData, {
+        headers: {
+          'Content-Type': 'application/json' // Set content type
+        }
+      });
+  
+      console.log("Response from server:", response.data);
+      toast({
+        title: "Transaction created!",
+        description: `Your Transaction added successfully!`,
+      });
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error adding transaction:", error);
+      if (error.response) {
+        console.log("Response data:", error.response.data); // Log specifics of the error response
         toast({
           variant: "destructive",
           title: "Error!",
-          description: error.message || "Your transaction wasn't created, Please try again",
+          description: error.response.data.message || "Your transaction wasn't created. Please try again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.message || "Your transaction wasn't created. Please try again.",
         });
       }
-    };
+    }
+  };
     
 
   return (
@@ -193,7 +208,7 @@ const Transactions = () => {
                     </thead>
                     <tbody className="divide-y">
                       {paginatedTransactions.map((transaction) => (
-                        <tr key={transaction.id} className="border-b transition-colors hover:bg-muted/50">
+                        <tr key={transaction.transactionId} className="border-b transition-colors hover:bg-muted/50">
                           <td className="p-4 align-middle">
                             <div className="flex items-center">
                               <div className={`p-2 rounded-md mr-3 ${transaction.type === "income" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
@@ -297,22 +312,22 @@ const Transactions = () => {
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="income">Income</SelectItem>
-                    <SelectItem value="housing">Housing</SelectItem>
-                    <SelectItem value="food">Food & Dining</SelectItem>
-                    <SelectItem value="transportation">Transportation</SelectItem>
-                    <SelectItem value="utilities">Utilities</SelectItem>
-                    <SelectItem value="entertainment">Entertainment</SelectItem>
-                    <SelectItem value="shopping">Shopping</SelectItem>
-                    <SelectItem value="health">Health & Fitness</SelectItem>
-                    <SelectItem value="personal">Personal Care</SelectItem>
-                    <SelectItem value="education">Education</SelectItem>
-                    <SelectItem value="travel">Travel</SelectItem>
-                    <SelectItem value="debt">Debt Payments</SelectItem>
-                    <SelectItem value="savings">Savings</SelectItem>
-                    <SelectItem value="gifts">Gifts & Donations</SelectItem>
-                    <SelectItem value="subscriptions">Subscriptions</SelectItem>
-                    <SelectItem value="Other">Other</SelectItem> 
+                    <SelectItem value="Income">Income</SelectItem>
+                    <SelectItem value="Housing">Housing</SelectItem>
+                    <SelectItem value="Food & Dining">Food & Dining</SelectItem>
+                    <SelectItem value="Transportation">Transportation</SelectItem>
+                    <SelectItem value="Utilities">Utilities</SelectItem>
+                    <SelectItem value="Entertainment">Entertainment</SelectItem>
+                    <SelectItem value="Shopping">Shopping</SelectItem>
+                    <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
+                    <SelectItem value="Personal Care">Personal Care</SelectItem>
+                    <SelectItem value="Education">Education</SelectItem>
+                    <SelectItem value="Travel">Travel</SelectItem>
+                    <SelectItem value="Debt Payments">Debt Payments</SelectItem>
+                    <SelectItem value="Savings">Savings</SelectItem>
+                    <SelectItem value="Gifts & Donations">Gifts & Donations</SelectItem>
+                    <SelectItem value="Subscriptions">Subscriptions</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

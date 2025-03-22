@@ -93,6 +93,7 @@ const Budget = () => {
   const [customCategory, setCustomCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  let isOverBudget = false;
 
   const handleCategoryChange = (value) => {
     setCategory(value);
@@ -123,24 +124,53 @@ const Budget = () => {
     }
 
     try {
+      // Normalize category and customCategory for comparison
+      const normalizedCategory = category.trim().toLowerCase();
+      const normalizedCustomCategory = customCategory.trim().toLowerCase();
+    
+      // Check if the category already exists in the budgetBook
+      const budgetExists = budgetBook.some(budget => {
+        const budgetCategory = budget.category.trim().toLowerCase();
+        const budgetCustomCategory = budget.customCategory.trim().toLowerCase();
+    
+        const isSameCategory = budgetCategory === normalizedCategory;
+        const isSameCustomCategory = category !== "Other" || budgetCustomCategory === normalizedCustomCategory;
+    
+        // Log for debugging
+        console.log(`Comparing: ${budgetCategory} with ${normalizedCategory}, and ${budgetCustomCategory} with ${normalizedCustomCategory}`);
+        
+        return isSameCategory && isSameCustomCategory;
+      });
+    
+      // If the budget exists, show a toast message and return early
+      if (budgetExists) {
+        toast({
+          title: "Budget Already Exists!",
+          description: `A budget for ${category === "Other" ? customCategory : category} already exists. Please edit or delete the existing budget.`,
+          variant: "destructive",
+        });
+        return;  // Exit the function early to avoid making the API call.
+      }
+      
       const budgetData = {
         userId: user.uid,
-        budgetId: "BGT-"+uuidv4(),
+        budgetId: "BGT-" + uuidv4(),
         category,
         customCategory: category === "Other" ? customCategory : "",
         amount: parseFloat(amount),
         notes,
-        date
+        date,
       };
-
+    
       const API_URL = "http://localhost:5000/api/budgets/";
       await axios.post(API_URL, budgetData);
-
+    
       toast({
         title: "Budget Created!",
         description: `Your ${category === "Other" ? customCategory : category} budget has been added.`,
       });
-
+    
+      // Reset form fields
       setIsNewBudgetDialogOpen(false);
       setCategory("");
       setCustomCategory("");
@@ -154,7 +184,7 @@ const Budget = () => {
         variant: "destructive",
       });
     }
-  };
+  }
 
   useEffect(() => {
     // Fetch budget and log it
@@ -175,6 +205,7 @@ const Budget = () => {
     };
   
     fetchBudget();
+    // eslint-disable-next-line
   }, [user]);
 
  
@@ -288,6 +319,73 @@ const Budget = () => {
     };
     
     const spentAmountPercentage = getSpentAmountPercent();
+
+    function getLastWeekTransactions(expenses) {
+      const currentDate = new Date();
+      const startDate = new Date(currentDate);
+      startDate.setDate(currentDate.getDate() - 6); // 6 days before today
+      startDate.setHours(0, 0, 0, 0); // Start of the day
+  
+      const endDate = new Date(currentDate);
+      endDate.setHours(23, 59, 59, 999); // End of today
+  
+      // Filter transactions for the last 7 days (includes today)
+      return expenses.filter(item => {
+          const itemDate = new Date(item.date); // Assuming item.date is in a valid format
+          return itemDate >= startDate && itemDate <= endDate;
+      });
+  }
+  
+  // Function to get transactions for the last 6 months
+  function getLastSixMonthsTransactions(expenses) {
+      const currentDate = new Date();
+      const startDate = new Date(currentDate);
+      
+      // Calculate the start date (First day of the month, six months ago)
+      startDate.setMonth(currentDate.getMonth() - 5); // Move to 5 months back
+      startDate.setDate(1); // Set to the first day of that month
+      startDate.setHours(0, 0, 0, 0); // Start of the day
+  
+      // Calculate the end date (Last day of the current month)
+      const endDate = new Date(currentDate);
+      endDate.setMonth(currentDate.getMonth() + 1); // Move to the next month
+      endDate.setDate(0); // Set to the last day of the current month
+      endDate.setHours(23, 59, 59, 999); // End of that day
+  
+      // Filter transactions for the last 6 months (includes the current month)
+      return expenses.filter(item => {
+          const itemDate = new Date(item.date); // Assuming item.date is in a valid format
+          return itemDate >= startDate && itemDate <= endDate;
+      });
+  }
+
+  function getLastThreeYearsTransactions(expenses) {
+    const currentDate = new Date();
+    const startDate = new Date(currentDate);
+    
+    // Calculate the start date (First day of the year, three years ago)
+    startDate.setFullYear(currentDate.getFullYear() - 3); // Move to three years ago
+    startDate.setMonth(0); // Set to January
+    startDate.setDate(1); // Set to the first day of January
+    startDate.setHours(0, 0, 0, 0); // Start of the day
+
+    const endDate = new Date(currentDate);
+    endDate.setHours(23, 59, 59, 999); // End of today
+
+    return expenses.filter(item => {
+        const itemDate = new Date(item.date); // Assuming item.date is in a valid format
+        return itemDate >= startDate && itemDate <= endDate;
+    });
+}
+  
+  // Get transactions
+  const lastWeekTransactions = getLastWeekTransactions(expenses);
+  const lastSixMonthsTransactions = getLastSixMonthsTransactions(expenses);
+  const lastThreeYearsTransactions = getLastThreeYearsTransactions(expenses);
+   // The second parameter is for pretty printing
+
+   console.log("lastThreeYearsTransactions : " + JSON.stringify(lastThreeYearsTransactions, null, 2));
+
     
     
   // Update budget data when time range changes
@@ -304,7 +402,8 @@ const Budget = () => {
         break;
       default:
         setBudgetData(monthlyBudgetData);
-    }
+    } //ignore the warning
+    // eslint-disable-next-line
   }, [timeRange]);
  
 
@@ -356,7 +455,9 @@ const Budget = () => {
       default:
         setSpendingData(monthlySpendingData);
     }
+    // eslint-disable-next-line
   }, [timeRange]);
+  
 
   // Calculate totals
   const totalBudgeted = budgetData.reduce((sum, item) => sum + item.budgeted, 0);
@@ -365,6 +466,7 @@ const Budget = () => {
   const spentPercentage = Math.round((totalSpent / totalBudgeted) * 100);
 
   const COLORS = ["#6E59A5", "#9b87f5", "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#757575"];
+  
 
   return (
     <DashboardLayout>
@@ -460,26 +562,41 @@ const Budget = () => {
                   <div className="space-y-4">
                     <h3 className="text-lg font-semibold">Top Categories</h3>
                     
-                    {budgetData.slice(0, 4).map((budget) => (
-                      <div key={budget.id} className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="font-medium">{budget.category}</span>
-                          <span>${budget.spent.toLocaleString()} of ${budget.budgeted.toLocaleString()}</span>
+                    {budgetBook.slice(0, 4).map((budget) => {
+                      const filteredExpenses = expenses.filter(transaction => {
+                        console.log('Checking expense:', transaction.category);
+                        return transaction.category.trim().toLowerCase() === budget.category.trim().toLowerCase();
+                      });
+
+                      console.log('Filtered Expenses:', filteredExpenses);
+
+                      const totalSpent = filteredExpenses.reduce((sum, transaction) => sum + transaction.amount, 0);
+                      console.log('Total Spent for', budget.category, ':', totalSpent);
+
+                      const remaining = budget.amount - totalSpent;
+                      const progressValue = budget.amount > 0 ? Math.min((totalSpent / budget.amount) * 100, 100) : 0;
+
+                      return (
+                        <div key={budget.id} className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="font-medium">{budget.category}</span>
+                            <span>${totalSpent.toLocaleString()} of ${budget.amount.toLocaleString()}</span>
+                          </div>
+                          <Progress 
+                            value={progressValue} 
+                            className={`h-2 ${totalSpent > budget.amount ? 'bg-rose-100' : ''}`}
+                          />
+                          <div className="flex justify-between text-xs text-muted-foreground">
+                            <span>
+                              {remaining >= 0
+                                ? `$${remaining.toLocaleString()} remaining`
+                                : `$${Math.abs(remaining).toLocaleString()} over budget`}
+                            </span>
+                            <span>{Math.round(progressValue)}%</span>
+                          </div>
                         </div>
-                        <Progress 
-                          value={(budget.spent / budget.budgeted) * 100} 
-                          className={`h-2 ${budget.spent > budget.budgeted ? 'bg-rose-100' : ''}`}
-                        />
-                        <div className="flex justify-between text-xs text-muted-foreground">
-                          <span>
-                            {budget.remaining >= 0
-                              ? `$${budget.remaining} remaining`
-                              : `$${Math.abs(budget.remaining)} over budget`}
-                          </span>
-                          <span>{Math.round((budget.spent / budget.budgeted) * 100)}%</span>
-                        </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     
                     <Button variant="outline" size="sm" className="w-full" onClick={() => setActiveTab("categories")}>
                       <ArrowRight className="mr-2 h-4 w-4" />
@@ -489,38 +606,49 @@ const Budget = () => {
                   
                   <div>
                     <h3 className="text-lg font-semibold mb-4">Budget Alerts</h3>
-                    
-                    {budgetData.filter(budget => budget.status === "over-budget").length > 0 ? (
-                      <div className="space-y-4">
-                        {budgetData
-                          .filter(budget => budget.status === "over-budget")
-                          .map(budget => (
+                      <div className="space-y-1">
+                      {budgetBook.map(budget => {
+                        // Filter expenses for the current budget category
+                        const filteredExpenses = expenses.filter(transaction => 
+                          transaction.category.trim().toLowerCase() === budget.category.trim().toLowerCase()
+                        );
+
+                        // Calculate the total amount spent in this category
+                        const totalSpent = filteredExpenses.reduce((sum, transaction) => sum + transaction.amount, 0);
+
+                        // Compare total spent with the budget amount
+                        if (totalSpent >= budget.amount) {
+                          isOverBudget = true; // Set the flag to true if any budget is over
+                          return (
                             <div key={budget.id} className="flex items-center p-3 bg-rose-50 border border-rose-200 rounded-md">
                               <AlertTriangle className="h-5 w-5 text-rose-500 mr-3 flex-shrink-0" />
                               <div>
                                 <p className="text-sm font-medium">
-                                  {budget.category} is over budget by ${Math.abs(budget.remaining)}
+                                  {budget.category} is over budget by ${Math.abs(budget.amount - totalSpent)}
                                 </p>
                                 <p className="text-xs text-muted-foreground">
-                                  You've spent ${budget.spent} of ${budget.budgeted} budget
+                                  You've spent ${totalSpent} of ${budget.amount} budget
                                 </p>
                               </div>
                             </div>
-                          ))}
+                          );
+                        }
+                        return null; // Return null if no alert is needed
+                      })}
+                      {!isOverBudget && (
+                          <div className="flex items-center p-3 bg-emerald-50 border border-emerald-200 rounded-md">
+                            <TrendingUp className="h-5 w-5 text-emerald-500 mr-3 flex-shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium">
+                                All categories are within budget
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Keep up the good work!
+                              </p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex items-center p-3 bg-emerald-50 border border-emerald-200 rounded-md">
-                        <TrendingUp className="h-5 w-5 text-emerald-500 mr-3 flex-shrink-0" />
-                        <div>
-                          <p className="text-sm font-medium">
-                            All categories are within budget
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            Keep up the good work!
-                          </p>
-                        </div>
-                      </div>
-                    )}
                     
                     <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
                       <h4 className="text-sm font-medium mb-1">Spending Tip</h4>
@@ -559,19 +687,29 @@ const Budget = () => {
                       </thead>
                       <tbody className="divide-y">
                         {budgetBook.map((budget) => {
-                          // Calculate total spent for the current budget category based on the transactions
-                          const totalSpent = transactions
-                            .filter(transaction => transaction.category === budget.category)
-                            .reduce((sum, transaction) => sum + transaction.amount, 0);
+                          console.log('Budget Category:', budget.category);
                           
-                          // Calculate remaining amount
+                          const filteredExpenses = expenses.filter(transaction => {
+                            console.log('Checking expense:', transaction.category);
+                            return transaction.category.trim().toLowerCase() === budget.category.trim().toLowerCase();
+                          });
+
+                          console.log('Filtered Expenses:', filteredExpenses);
+
+                          const totalSpent = filteredExpenses.reduce((sum, transaction) => sum + transaction.amount, 0);
+                          console.log('Total Spent for', budget.category, ':', totalSpent);
+
                           const remaining = budget.amount - totalSpent;
+                          const progressValue = budget.amount > 0 ? Math.min((totalSpent / budget.amount) * 100, 100) : 0;
+
                           return (
                             <tr key={budget.budgetId} className="border-b transition-colors hover:bg-muted/50">
                               <td className="p-4 align-middle font-medium">{budget.category}</td>
                               <td className="p-4 align-middle">${budget.amount.toLocaleString()}</td>
-                              <td className="p-4 align-middle">${totalSpent.toLocaleString()}</td>
-                              <td className={`p-4 align-middle font-medium ${remaining < 0 ? 'text-rose-600' : remaining === 0 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                              <td className="p-4 align-middle">${totalSpent.toLocaleString() || '0'}</td>
+                              <td className={`p-4 align-middle font-medium ${
+                                remaining < 0 ? 'text-rose-600' : remaining === 0 ? 'text-amber-600' : 'text-emerald-600'
+                              }`}>
                                 {remaining >= 0 
                                   ? `$${remaining.toLocaleString()}` 
                                   : `-$${Math.abs(remaining).toLocaleString()}`}
@@ -579,11 +717,11 @@ const Budget = () => {
                               <td className="p-4 align-middle w-[200px]">
                                 <div className="flex items-center gap-2">
                                   <Progress 
-                                    value={(totalSpent / budget.amount) * 100} 
+                                    value={progressValue} 
                                     className={`h-2 flex-grow ${totalSpent > budget.amount ? 'bg-rose-100' : ''}`}
                                   />
                                   <span className="text-xs w-[40px] text-right">
-                                    {Math.round((totalSpent / budget.amount) * 100)}%
+                                    {totalSpent > 0 ? Math.round(progressValue) : '0'}%
                                   </span>
                                 </div>
                               </td>
@@ -626,7 +764,7 @@ const Budget = () => {
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" />
                     <YAxis />
-                    <Tooltip formatter={(value) => [`$${value}`, 'Amount']} />
+                    <Tooltip formatter={(value) => [`GHS ${value}`, 'Amount']} />
                     <Legend />
                     <Bar dataKey="Housing" stackId="a" fill={COLORS[0]} />
                     <Bar dataKey="Food" stackId="a" fill={COLORS[1]} />
@@ -727,21 +865,22 @@ const Budget = () => {
                 <SelectValue placeholder="Select category" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="housing">Housing</SelectItem>
-                <SelectItem value="food">Food & Dining</SelectItem>
-                <SelectItem value="transportation">Transportation</SelectItem>
-                <SelectItem value="utilities">Utilities</SelectItem>
-                <SelectItem value="entertainment">Entertainment</SelectItem>
-                <SelectItem value="shopping">Shopping</SelectItem>
-                <SelectItem value="health">Health & Fitness</SelectItem>
-                <SelectItem value="personal">Personal Care</SelectItem>
-                <SelectItem value="education">Education</SelectItem>
-                <SelectItem value="travel">Travel</SelectItem>
-                <SelectItem value="debt">Debt Payments</SelectItem>
-                <SelectItem value="savings">Savings</SelectItem>
-                <SelectItem value="gifts">Gifts & Donations</SelectItem>
-                <SelectItem value="subscriptions">Subscriptions</SelectItem>
-                <SelectItem value="Other">Other</SelectItem> {/* Capitalize "Other" for consistency */}
+                <SelectItem value="Income">Income</SelectItem>
+                <SelectItem value="Housing">Housing</SelectItem>
+                <SelectItem value="Food & Dining">Food & Dining</SelectItem>
+                <SelectItem value="Transportation">Transportation</SelectItem>
+                <SelectItem value="Utilities">Utilities</SelectItem>
+                <SelectItem value="Entertainment">Entertainment</SelectItem>
+                <SelectItem value="Shopping">Shopping</SelectItem>
+                <SelectItem value="Health & Fitness">Health & Fitness</SelectItem>
+                <SelectItem value="Personal Care">Personal Care</SelectItem>
+                <SelectItem value="Education">Education</SelectItem>
+                <SelectItem value="Travel">Travel</SelectItem>
+                <SelectItem value="Debt Payments">Debt Payments</SelectItem>
+                <SelectItem value="Savings">Savings</SelectItem>
+                <SelectItem value="Gifts & Donations">Gifts & Donations</SelectItem>
+                <SelectItem value="Subscriptions">Subscriptions</SelectItem>
+                <SelectItem value="Other">Other</SelectItem>
               </SelectContent>
             </Select>
           </div>
