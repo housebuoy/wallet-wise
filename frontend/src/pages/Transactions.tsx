@@ -139,13 +139,30 @@ const Transactions = () => {
               <Plus className="mr-2 h-4 w-4" />
               Add Transaction
             </Button>
-            <Button variant="outline" className="flex-shrink-0">
+            <Button 
+              variant={transactionType.length === 0 ? "ghost" : 'outline'} 
+              className={`flex-shrink-0 ${transactionType.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`} 
+              disabled={transactionType.length === 0 || transactions.length === 0} // disable if either condition is met
+            > 
               <Download className="mr-2 h-4 w-4" />
               Export
             </Button>
           </div>
         </div>
 
+        {transactions.length === 0 && !isLoading ? (
+        <div className="flex flex-col items-center justify-center min-h-full pt-24 space-y-4">
+          <RefreshCw className="h-12 w-12 text-muted-foreground" />
+          <h1 className="text-lg font-semibold">No transactions found</h1>
+          <p className="text-sm text-muted-foreground">Add your first transaction to get started.</p>
+          <Button onClick={() => setIsDialogOpen(true)} className="flex-shrink-0">
+              <Plus className="mr-2 h-4 w-4" />
+              Add Transaction
+            </Button>
+        </div>
+      )
+      :
+      (
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="md:col-span-4">
             <CardHeader className="pb-3">
@@ -289,6 +306,8 @@ const Transactions = () => {
             </div>
           </Card>
         </div>
+      )
+      }
       </div>
 
       {/* Add Transaction Dialog */}
