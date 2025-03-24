@@ -466,7 +466,51 @@ const Budget = () => {
   const spentPercentage = Math.round((totalSpent / totalBudgeted) * 100);
 
   const COLORS = ["#6E59A5", "#9b87f5", "#4CAF50", "#F44336", "#2196F3", "#FFC107", "#757575"];
-  
+
+  function processSpendingData(expenses, timeRange) {
+    const groupedData = {};
+
+    expenses.forEach(({ amount, category, date }) => {
+        const transactionDate = new Date(date);
+        let key;
+
+        if (timeRange === "week") {
+            key = transactionDate.toLocaleDateString("en-US", { weekday: "short" }); // "Mon", "Tue", etc.
+        } else if (timeRange === "month") {
+            key = transactionDate.toLocaleDateString("en-US", { month: "short" }); // "Jan", "Feb", etc.
+        } else {
+            key = transactionDate.getFullYear().toString(); // "2024", "2025", etc.
+        }
+
+        if (!groupedData[key]) {
+            groupedData[key] = { name: key, Housing: 0, Food: 0, Utilities: 0, Entertainment: 0, Shopping: 0 };
+        }
+
+        // Assign amount to the appropriate category
+        if (["Housing"].includes(category)) {
+            groupedData[key].Housing += amount;
+        } else if (["Food & Dining"].includes(category)) {
+            groupedData[key].Food += amount;
+        } else if (["Transportation"].includes(category)) {
+            groupedData[key].Transportation += amount;
+        } else if (["Utilities"].includes(category)) {
+            groupedData[key].Utilities += amount;
+        } else if (["Entertainment"].includes(category)) {
+            groupedData[key].Entertainment += amount;
+        } else if (["Shopping"].includes(category)) {
+            groupedData[key].Shopping += amount;
+        } else {
+            groupedData[key].Other += amount;
+        }
+    });
+
+    return Object.values(groupedData);
+}
+
+// Usage Example:
+// const timeRange = "month"; // Change based on user selection
+const filteredExpenses = getLastSixMonthsTransactions(expenses); // Get transactions
+const spendingDataValues = processSpendingData(filteredExpenses, timeRange);
 
   return (
     <DashboardLayout>
@@ -758,7 +802,7 @@ const Budget = () => {
               <CardContent className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={spendingData}
+                    data={spendingDataValues}
                     margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                   >
                     <CartesianGrid strokeDasharray="3 3" />
@@ -778,8 +822,8 @@ const Budget = () => {
               </CardContent>
             </Card>
 
-            <div className="grid gap-4 md:grid-cols-2">
-              <Card>
+            <div className="">
+              {/* <Card>
                 <CardHeader>
                   <CardTitle>Month-over-Month Change</CardTitle>
                   <CardDescription>Compare spending with previous month</CardDescription>
@@ -815,7 +859,7 @@ const Budget = () => {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card>
                 <CardHeader>

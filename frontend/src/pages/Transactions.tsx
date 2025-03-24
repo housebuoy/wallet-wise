@@ -15,6 +15,8 @@ import axios from "axios";
 import { v4 as uuidv4 } from "uuid";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton"
+
 
 
 const Transactions = () => {
@@ -31,6 +33,7 @@ const Transactions = () => {
   const [transactions, setTransactions] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const transactionsPerPage = 10;
 
   const auth = useContext(AuthContext);
@@ -41,11 +44,16 @@ const Transactions = () => {
 
     const fetchTransactions = async () => {
       try {
+        setIsLoading(true);
         const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
         setTransactions(response.data); // Set the fetched transactions
       } catch (error) {
         console.error("Error fetching transactions:", error);
+        setIsLoading(false);
       }
+      finally {
+        setIsLoading(false);
+      } 
     };
 
     fetchTransactions();
@@ -207,29 +215,52 @@ const Transactions = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y">
-                      {paginatedTransactions.map((transaction) => (
-                        <tr key={transaction.transactionId} className="border-b transition-colors hover:bg-muted/50">
-                          <td className="p-4 align-middle">
-                            <div className="flex items-center">
-                              <div className={`p-2 rounded-md mr-3 ${transaction.type === "income" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
-                                {transaction.type === "income" ? (
-                                  <FaCaretUp className="h-5 w-5 text-emerald-600" />
-                                ) : (
-                                  <FaCaretDown className="h-5 w-5 text-rose-600" />
-                                )}
-                              </div>
-                              <span>{transaction.description}</span>
-                            </div>
-                          </td>
-                          <td className="p-4 align-middle">{transaction.category}</td>
-                          <td className="p-4 align-middle">{transaction.account}</td>
-                          <td className="p-4 align-middle">{transaction.date ? format(new Date(transaction.date), 'dd/MM/yyyy') : 'N/A'}</td>
-                          <td className={`p-4 align-middle text-right font-medium ${transaction.amount > 0 ? "text-emerald-600" : "text-rose-600"}`}>
-                            {transaction.amount > 0 ? "+" : ""}
-                            {transaction.amount.toLocaleString("en-US", { style: "currency", currency: "GHS" })}
-                          </td>
-                        </tr>
-                      ))}
+                      {isLoading
+                        ? Array.from({ length: 5 }).map((_, index) => ( // Adjust the length for desired number of skeletons
+                            <tr key={index} className="border-b transition-colors hover:bg-muted/50">
+                              <td className="p-4 align-middle">
+                                <div className="flex items-center">
+                                  <Skeleton className="w-[20px] h-[20px] rounded-md mr-3" />
+                                  <Skeleton className="w-[150px] h-[20px] rounded-md" />
+                                </div>
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Skeleton className="w-[100px] h-[20px] rounded-md" />
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Skeleton className="w-[100px] h-[20px] rounded-md" />
+                              </td>
+                              <td className="p-4 align-middle">
+                                <Skeleton className="w-[80px] h-[20px] rounded-md" />
+                              </td>
+                              <td className="p-4 align-middle text-right font-medium">
+                                <Skeleton className="w-[100px] h-[20px] rounded-md" />
+                              </td>
+                            </tr>
+                          ))
+                        : paginatedTransactions.map((transaction) => (
+                            <tr key={transaction.transactionId} className="border-b transition-colors hover:bg-muted/50">
+                              <td className="p-4 align-middle">
+                                <div className="flex items-center">
+                                  <div className={`p-2 rounded-md mr-3 ${transaction.type === "income" ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-700"}`}>
+                                    {transaction.type === "income" ? (
+                                      <FaCaretUp className="h-5 w-5 text-emerald-600" />
+                                    ) : (
+                                      <FaCaretDown className="h-5 w-5 text-rose-600" />
+                                    )}
+                                  </div>
+                                  <span>{transaction.description}</span>
+                                </div>
+                              </td>
+                              <td className="p-4 align-middle">{transaction.category}</td>
+                              <td className="p-4 align-middle">{transaction.account}</td>
+                              <td className="p-4 align-middle">{transaction.date ? format(new Date(transaction.date), 'dd/MM/yyyy') : 'N/A'}</td>
+                              <td className={`p-4 align-middle text-right font-medium ${transaction.amount > 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                                {transaction.amount > 0 ? "+" : ""}
+                                {transaction.amount.toLocaleString("en-US", { style: "currency", currency: "GHS" })}
+                              </td>
+                            </tr>
+                          ))}
                     </tbody>
                   </table>
                 </div>
