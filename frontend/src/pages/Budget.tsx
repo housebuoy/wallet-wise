@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import axios from 'axios'
+import { Skeleton } from "@/components/ui/skeleton";
 import { v4 as uuidv4 } from "uuid";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ import {
   DollarSign,
   Edit,
   Trash2,
+  ChartAreaIcon,
 } from "lucide-react";
 import {
   BarChart,
@@ -93,6 +95,7 @@ const Budget = () => {
   const [customCategory, setCustomCategory] = useState('');
   const [amount, setAmount] = useState('');
   const [notes, setNotes] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   let isOverBudget = false;
 
   const handleCategoryChange = (value) => {
@@ -191,10 +194,12 @@ const Budget = () => {
     const fetchBudget = async () => {
       
       try {
+        setIsLoading(true);
         const response = await axios.get(`http://localhost:5000/api/budgets/${user.uid}`);
-        console.log(response.data); // Check the structure here
-        setBudgetBook(response.data || []);
+        console.log(response.data);
+        setBudgetBook(response.data || []); // Check the structure here
       } catch (error) {
+        setIsLoading(false);
         console.error("Error fetching budgets:", error);
         toast({
           title: "Fetch Error",
@@ -202,6 +207,9 @@ const Budget = () => {
           variant: "destructive",
         });
       }
+      finally {
+        setIsLoading(false);
+      } 
     };
   
     fetchBudget();
@@ -215,27 +223,24 @@ const Budget = () => {
   
       const fetchTransactions = async () => {
         try {
+          setIsLoading(true);
           const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
           const fetchedTransactions = response.data; // Set the fetched transactions
           setTransactions(fetchedTransactions);
-        
+          
         const filteredExpenses = fetchedTransactions.filter(transaction => transaction.type !== 'income');
         setExpenses(filteredExpenses);
         } catch (error) {
+          setIsLoading(false);
           console.error("Error fetching transactions:", error);
+        }
+        finally {
+          setIsLoading(false);
         }
       };
   
       fetchTransactions();
     }, [user]);
-
-    const transactionss = [
-      { date: "2025-03-19T12:00:00Z", amount: 100 },
-      { date: "2025-03-15T12:00:00Z", amount: 50 },
-      { date: "2025-02-20T12:00:00Z", amount: 75 },
-      // Add more transactions as needed
-    ];
-
 
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
@@ -512,6 +517,7 @@ const Budget = () => {
 const filteredExpenses = getLastSixMonthsTransactions(expenses); // Get transactions
 const spendingDataValues = processSpendingData(filteredExpenses, timeRange);
 
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -531,7 +537,40 @@ const spendingDataValues = processSpendingData(filteredExpenses, timeRange);
             </Button>
           </div>
         </div>
-
+        {isLoading ? (
+          <Card className="min-h-4/5 py-10">
+            <CardHeader>
+              <Skeleton className="w-[100px] h-[20px]" />
+              <Skeleton className="w-3/5 h-[60px]" />
+            </CardHeader>
+            <CardContent>
+              {/* Skeletons for Actual Content */}
+              <div className="flex flex-col items-center justify-center space-y-4 w-full">
+                <Skeleton className="w-full h-[20px]" />
+                <Skeleton className="w-full h-[50px]" />
+                <Skeleton className="w-full h-[20px]" />
+              </div>
+              <div className="mt-6 grid gap-4 grid-cols-1 md:grid-cols-2">
+                <Skeleton className="w-3/5 h-[50px]" />
+                <Skeleton className="w-3/5 h-[50px]" />
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+        <>
+        { budgetBook.length === 0 && !isLoading ? (
+          <div className="flex flex-col items-center justify-center min-h-full pt-24 space-y-4">
+            <ChartAreaIcon className="h-12 w-12 text-muted-foreground"/>
+            <h1 className="text-lg font-semibold">No Budget found</h1>
+            <p className="text-sm text-muted-foreground">Add your first budget to get started.</p>
+            <Button onClick={() => setIsNewBudgetDialogOpen(true)} className="flex-shrink-0">
+                <Plus className="mr-2 h-4 w-4" />
+                Add Transaction
+              </Button>
+          </div>
+        )
+      :
+      (
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -823,44 +862,6 @@ const spendingDataValues = processSpendingData(filteredExpenses, timeRange);
             </Card>
 
             <div className="">
-              {/* <Card>
-                <CardHeader>
-                  <CardTitle>Month-over-Month Change</CardTitle>
-                  <CardDescription>Compare spending with previous month</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium">Total Spending</span>
-                      <div className="flex items-center text-emerald-600">
-                        <TrendingDown className="mr-1 h-4 w-4" />
-                        <span>-3.2%</span>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {budgetData.slice(0, 5).map((budget, index) => (
-                        <div key={budget.id} className="flex items-center justify-between text-sm">
-                          <span>{budget.category}</span>
-                          <div className={`flex items-center ${index % 2 === 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
-                            {index % 2 === 0 ? (
-                              <>
-                                <TrendingDown className="mr-1 h-4 w-4" />
-                                <span>-{(index + 1) * 2}%</span>
-                              </>
-                            ) : (
-                              <>
-                                <TrendingUp className="mr-1 h-4 w-4" />
-                                <span>+{(index) * 1.5}%</span>
-                              </>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card> */}
-
               <Card>
                 <CardHeader>
                   <CardTitle>Budget Efficiency</CardTitle>
@@ -892,6 +893,13 @@ const spendingDataValues = processSpendingData(filteredExpenses, timeRange);
             </div>
           </TabsContent>
         </Tabs>
+            )
+            
+          }
+        </>
+      )}
+
+        
       </div>
 
       {/* Create Budget Dialog */}
