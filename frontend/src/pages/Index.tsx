@@ -1,4 +1,7 @@
-
+import React from "react";
+import Slider from "react-slick";
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 import { Link } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -12,6 +15,11 @@ import {
   Users,
   Wallet
 } from "lucide-react";
+
+
+import slide1 from "../assets/slide1.png";
+import slide2 from "../assets/slide2.png";
+import slide3 from "../assets/slide3.png";
 
 const Index = () => {
   const features = [
@@ -47,31 +55,60 @@ const Index = () => {
     },
   ];
 
-  return (
-    <div className="min-h-screen flex flex-col">
+  const HeroSection = () => {
+    const images = [slide1, slide2, slide3];
+    const settings = {
+    dots: true,
+    infinite: true,
+    speed: 1000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+    autoplay: true,
+    autoplaySpeed: 4000,
+    fade: true,
+  };
+    return (
+    <section className="relative w-full min-h-[80vh] flex flex-col items-center justify-center text-white">
+      <Slider {...settings} className="absolute top-0 left-0 w-full h-full">
+      {images.map((src, index) => (
+      <div key={index} className="w-full min-h-[80vh]">
+      <img src={src} alt={`Slide ${index + 1}`} className="w-full h-[80vh] object-cover" />
+    </div>
+  ))}
+    </Slider>
+    <div className="absolute top-0 left-0 w-full h-[80vh] bg-black/50"></div>
+    <div className="relative z-10 container mx-auto px-6 text-center">
+      <h1 className="text-4xl md:text-5xl font-bold mb-4">Take Control of Your Finances</h1>
+    <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
+      WalletWise helps you track expenses, set budgets, and achieve your financial goals with powerful tools and insights.
+    </p>
+    <div className="flex flex-col sm:flex-row justify-center gap-4">
+      <Link to="/login">
+    <Button size="lg" variant="secondary" className="w-full sm:w-auto text-md">
+      Get Started
+    </Button>
+    </Link>
+    <Link to="/features">
+    <Button
+    size="lg"
+    variant="outline"
+    className="w-full sm:w-auto bg-transparent border-white text-white text-md hover:bg-white hover:text-walletwise-purple"
+    >
+      Learn More
+    </Button>
+    </Link>
+    </div>
+    </div>
+    </section>
+    );
+  };
+    return (
+    <div>
+      <div >
       <Navbar />
-      
-      {/* Hero Section */}
-      <section className="bg-gradient-to-r from-walletwise-purple to-walletwise-light-purple text-white py-20 flex flex-col items-center justify-center min-h-screen">
-        <div className="container mx-auto px-6 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Take Control of Your Finances</h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            WalletWise helps you track expenses, set budgets, and achieve your financial goals with powerful tools and insights.
-          </p>
-          <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <Link to="/login">
-              <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                Get Started
-              </Button>
-            </Link>
-            <Link to="/features">
-              <Button size="lg" variant="outline" className="w-full sm:w-auto bg-transparent border-white text-white hover:bg-white hover:text-walletwise-purple">
-                Learn More
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
+    </div>
+    {/* Include the HeroSection here */}
+    <HeroSection />
 
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
