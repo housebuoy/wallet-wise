@@ -22,6 +22,7 @@ import Report from "./pages/Reports";
 import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import Help from "./pages/Help";
+import SavingsGoals from "./pages/SavingsGoals";
 
 
 
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/transactions" element={<ProtectedRoute><Transactions /></ProtectedRoute>} />
             <Route path="/budget" element={<ProtectedRoute><Budget /></ProtectedRoute>} />
+            <Route path="/savings" element={<ProtectedRoute><SavingsGoals /></ProtectedRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

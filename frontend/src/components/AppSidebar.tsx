@@ -67,11 +67,6 @@ export const AppSidebar = () => {
       path: "/savings",
     },
     {
-      title: "Reports",
-      icon: LineChart,
-      path: "/reports",
-    },
-    {
       title: "Shared Accounts",
       icon: Users,
       path: "/shared-accounts",
@@ -80,6 +75,11 @@ export const AppSidebar = () => {
       title: "Payments",
       icon: QrCode,
       path: "/payments",
+    },
+    {
+      title: "Reports",
+      icon: LineChart,
+      path: "/reports",
     },
     {
       title: "Settings",
@@ -131,7 +131,7 @@ export const AppSidebar = () => {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>      
-      <div className="border-t border-gray-200 px-2 py-4 flex items-center gap-3 cursor-pointer hover:bg-gray-100">
+      <button onClick={()=> navigate("/settings")} className="border-t border-gray-200 px-2 py-4 flex items-center gap-3 cursor-pointer hover:bg-gray-100">
         <Avatar>
           <AvatarImage src={user?.photoURL || "https://via.placeholder.com/100"} alt="User" />
           <AvatarFallback className="font-semibold">{user?.displayName?.charAt(0) || "U"}</AvatarFallback>
@@ -141,7 +141,7 @@ export const AppSidebar = () => {
           <span className="text-sm text-gray-500 truncate max-w-[150px] block">{user ? user.email : "johndoe@example.com"}</span>
         </div>        
         <FaChevronUp className="text-sm" />
-      </div>
+      </button>
     </Sidebar>
   );
 };
