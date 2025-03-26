@@ -1,69 +1,41 @@
-# Welcome to your Lovable project
+# Savings Goal Tracker
+Wallet-Wise 
 
-## Project info
+## Introduction
 
-**URL**: https://lovable.dev/projects/0fc677b5-7114-44d3-ae1b-f4ed5e3fa65e
+The Budget Tracker is a web application designed to help users manage their finances, savings goals effectively. Users can create savings goals, allocate funds towards their goals, and track their progress over time. This project leverages modern technologies like React for the frontend and Node.js with Express and MongoDB for the backend.
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- **Create Savings Goals:** Users can define a savings goal with a target amount, goal name, and date.
+- **Allocate Funds:** Users can allocate funds to their goals to keep track of how much they've saved.
+- **Track Progress:** Users can view their total saved amount against their target amount.
+- **User Authentication:** Secure login and registration functionalities (if implemented).
 
-**Use Lovable**
+## Technologies Used
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/0fc677b5-7114-44d3-ae1b-f4ed5e3fa65e) and start prompting.
+- **Frontend:** React, Axios, Toast notifications
+- **Backend:** Node.js, Express.js, Mongoose
+- **Database:** MongoDB
+- **Authentication:** JWT (if implemented)
+- **Styling:** CSS or a library such as Bootstrap or Tailwind CSS (if applicable)
 
-Changes made via Lovable will be committed automatically to this repo.
+## Getting Started
 
-**Use your preferred IDE**
+### Prerequisites
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+To run this project, ensure you have the following installed:
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js
+- npm or yarn
+- MongoDB (for local development) or a MongoDB Atlas account
 
-Follow these steps:
+### Installation
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/housebuoy/wallet-wise
+   cd wallet-wise
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with .
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/0fc677b5-7114-44d3-ae1b-f4ed5e3fa65e) and click on Share -> Publish.
-
-## I want to use a custom domain - is that possible?
-
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+## You need to run the backend manually to access the data stored in the database
+1. Npm start in the command terminal
