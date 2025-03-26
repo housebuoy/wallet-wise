@@ -24,6 +24,11 @@ const SavingsSchema = new mongoose.Schema(
         type: Number,
         default: 0, // Optional: Defaults to 0 if not provided
       },
+    allocationAmount: {
+        type: Number,
+        default: 0, // Optional: Defaults to 0 if not provided
+        required: false,
+    }
   },
   { timestamps: true }
 );

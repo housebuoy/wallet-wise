@@ -23,6 +23,7 @@ import Settings from "./pages/Settings";
 import Payments from "./pages/Payments";
 import Help from "./pages/Help";
 import SavingsGoals from "./pages/SavingsGoals";
+import SharedAccounts from "./pages/SharedAccounts";
 
 
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
             <Route path="/payments" element={<ProtectedRoute><Payments /></ProtectedRoute>} />
             <Route path="/help" element={<ProtectedRoute><Help /></ProtectedRoute>} />
+            <Route path="/shared-accounts" element={<ProtectedRoute><SharedAccounts /></ProtectedRoute>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

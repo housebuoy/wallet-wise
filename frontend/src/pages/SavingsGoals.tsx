@@ -146,14 +146,21 @@ const SavingsGoals = () => {
     setSelectedGoalId(null);
   }
 
+  const getUpdatedAmount = (initialAmount, allocationAmount) => {
+    return allocationAmount > 0 ? parseFloat(allocationAmount) : initialAmount + parseFloat(allocationAmount);
+  };
+
   const handleAllocate = async (e) => {
     e.preventDefault();
     if (!selectedGoalId) return; // Ensure a goal is selected
   
-    const allocationData = {
-      allocationAmount: parseFloat(allocationAmount),
-    };
+    const updatedAmount = getUpdatedAmount(initialAmount, allocationAmount); 
   
+    const allocationData = {
+      initialAmount: updatedAmount,  // This might need clarification; otherwise, we focus on allocation
+      allocationAmount: parseFloat(allocationAmount), // Ensure allocationAmount is sent
+    };
+    
     try {
       const response = await axios.put(`http://localhost:5000/api/savings/${selectedGoalId}`, allocationData);
       toast({
@@ -161,23 +168,16 @@ const SavingsGoals = () => {
         description: `You have successfully allocated funds to the goal.`,
       });
       setAllocationOpen(false);
-      resetForm(); // Reset allocation details
-       // Refresh saving goals to reflect the changes
+      resetForm();
     } catch (error) {
-        if (error.response) {
-          console.log("Response data:", error.response.data); // Log specifics of the error response
-          toast({
-            variant: "destructive",
-            title: "Error!",
-            description: error.response.data.message || "Your Saving Goal wasn't created. Please try again.",
-          });
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Error!",
-            description: error.message || "Your Saving Goal wasn't created. Please try again.",
-          });
-        }
+      if (error.response) {
+        console.log("Response data:", error.response.data);
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.response.data.message || "Your Saving Goal wasn't created. Please try again.",
+        });
+      }
     }
   };
 
