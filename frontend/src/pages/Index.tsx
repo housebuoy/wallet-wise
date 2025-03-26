@@ -68,15 +68,15 @@ const Index = () => {
     fade: true,
   };
     return (
-    <section className="relative w-full min-h-[80vh] flex flex-col items-center justify-center text-white">
-      <Slider {...settings} className="absolute top-0 left-0 w-full h-full">
-      {images.map((src, index) => (
-      <div key={index} className="w-full min-h-[80vh]">
-      <img src={src} alt={`Slide ${index + 1}`} className="w-full h-[80vh] object-cover" />
-    </div>
-  ))}
-    </Slider>
-    <div className="absolute top-0 left-0 w-full h-[80vh] bg-black/50"></div>
+    <section className="relative w-full min-h-[90vh] flex flex-col items-center justify-center text-white">
+      <Slider {...settings} className="absolute top-0 left-0 w-full h-full overflow-x-hidden overflow-y-hidden">
+        {images.map((src, index) => (
+            <div key={index} className="w-full min-h-[80vh]">
+            <img src={src} alt={`Slide ${index + 1}`} className="w-full h-[80vh] object-cover" />
+          </div>
+        ))}
+      </Slider>
+    <div className="absolute top-0 left-0 w-full h-[90vh] bg-black/50"></div>
     <div className="relative z-10 container mx-auto px-6 text-center">
       <h1 className="text-4xl md:text-5xl font-bold mb-4">Take Control of Your Finances</h1>
     <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
@@ -113,7 +113,7 @@ const Index = () => {
       {/* Features Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-6">
-          <h2 className="text-3xl font-bold text-center mb-12">Powerful Features to Manage Your Money</h2>
+          <h2 className="text-3xl font-bold text-center mb-12 mt-12">Powerful Features to Manage Your Money</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
               <div key={index} className="bg-white p-6 rounded-lg shadow-sm border hover:shadow-md transition-shadow">

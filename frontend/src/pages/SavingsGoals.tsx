@@ -11,7 +11,10 @@ import { useToast } from "@/components/ui/use-toast";
 import AuthContext from "@/context/AuthContext";
 import { PiggyBank, Plus, Trash2, TrendingUp } from "lucide-react";
 import { CgPushChevronRightR } from "react-icons/cg";
-// import { savingsGoalsService } from "@/services/savingsGoalsService";
+import { FaSackDollar } from "react-icons/fa6";
+import { v4 as uuidv4 } from "uuid";
+
+import axios from "axios";
 
 const SavingsGoals = () => {
   const queryClient = useQueryClient();
@@ -22,9 +25,15 @@ const SavingsGoals = () => {
   const [goalName, setGoalName] = useState("");
   const [targetAmount, setTargetAmount] = useState("");
   const [initialAmount, setInitialAmount] = useState("");
+  const [date, setDate] = useState("");
   const [goals, setGoals] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [transactions, setTransactions] = useState([]);
+  const [savingGoals, setSavingGoals] = useState([]);
+  const [allocationOpen, setAllocationOpen] = useState(false);
+  const [allocationAmount, setAllocationAmount] = useState("");
+  const [selectedGoalId, setSelectedGoalId] = useState(null);
 
   const dummyGoals = [
     { _id: 'goal1', name: 'Emergency Fund', targetAmount: 5000, currentAmount: 1500 },
@@ -41,35 +50,144 @@ const SavingsGoals = () => {
       setIsLoading(false);
     }, 500); // Mock an API call with a slight delay
   }, );
-  // const createGoalMutation = useMutation({
-  //     mutationFn: (data: { goal: { name: string; targetAmount: number; currentAmount: number }; userId: string }) =>
-  //       savingsGoalsService.createGoal(data.goal, data.userId),
-  //     onSuccess: () => {
-  //       queryClient.invalidateQueries(['savingsGoals']);
-  //       setNewGoalOpen(false);
-  //       setGoalName("");
-  //       setTargetAmount("");
-  //       setInitialAmount("");
-  //     },
-  //   });
 
-  // const deleteGoalMutation = useMutation({
-  //   mutationFn: savingsGoalsService.deleteGoal,
-  //   onSuccess: () => {
-  //     queryClient.invalidateQueries(['savingsGoals']);
-  //     toast({ title: "Goal deleted", description: "Your savings goal was removed." });
-  //   },
-  // });
+  useEffect(() => {
+      if (!user) return; // Ensure user is authenticated before fetching
+  
+      const fetchSavingGoals = async () => {
+        try {
+          setIsLoading(true);
+          const response = await axios.get(`http://localhost:5000/api/savings/${user.uid}`);
+          setSavingGoals(response.data); // Set the fetched transactions
+          console.log("Fetched savings:", response.data);
+        } catch (error) {
+          console.error("Error fetching transactions:", error);
+          setIsLoading(false);
+        }
+        finally {
+          setIsLoading(false);
+        } 
+      };
+  
+      fetchSavingGoals();
+    }, [user]);
 
-  // const handleCreateGoal = (e) => {
-  //   e.preventDefault();
-  //   createGoalMutation.mutate({
-  //     userId: user.uid,
-  //     name: goalName,
-  //     targetAmount: parseFloat(targetAmount),
-  //     currentAmount: initialAmount ? parseFloat(initialAmount) : 0,
-  //   });
-  // };
+  const submitSavingGoal = async () => {
+    if (!user || !user.uid) {
+      alert("User not authenticated!");
+      return;
+    }
+  
+    const savingGoalData = {
+      userId: user.uid,
+      savingGoalId: "SVN-" + uuidv4(),
+      goalName: goalName,
+      targetAmount: parseFloat(targetAmount),
+      initialAmount: parseFloat(initialAmount),
+      date: date,
+    };
+  
+    console.log("Saving Data to be sent:", savingGoalData);
+  
+    try {
+      const API_URL = "http://localhost:5000/api/savings";
+      const response = await axios.post(API_URL, savingGoalData, {
+        headers: {
+          'Content-Type': 'application/json' // Set content type
+        }
+      });
+  
+      console.log("Response from server:", response.data);
+      toast({
+        title: "Saving Goal Created!",
+        description: `Your Saving Goal was added successfully!`,
+      });
+      setNewGoalOpen(false);
+    } catch (error) {
+      console.error("Error adding saving goal:", error);
+      if (error.response) {
+        console.log("Response data:", error.response.data); // Log specifics of the error response
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.response.data.message || "Your Saving Goal wasn't created. Please try again.",
+        });
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error!",
+          description: error.message || "Your Saving Goal wasn't created. Please try again.",
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (!user) return; // Ensure user is authenticated before fetching
+
+    const fetchTransactions = async () => {
+      try {
+        setIsLoading(true);
+        const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+        setTransactions(response.data); 
+        console.log("Fetched transactions:", response.data);
+      } catch (error) {
+        console.error("Error fetching transactions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchTransactions();
+  }, [user]);
+
+  function resetForm() {
+    setAllocationAmount("");
+    setSelectedGoalId(null);
+  }
+
+  const handleAllocate = async (e) => {
+    e.preventDefault();
+    if (!selectedGoalId) return; // Ensure a goal is selected
+  
+    const allocationData = {
+      allocationAmount: parseFloat(allocationAmount),
+    };
+  
+    try {
+      const response = await axios.put(`http://localhost:5000/api/savings/${selectedGoalId}`, allocationData);
+      toast({
+        title: "Funds Allocated!",
+        description: `You have successfully allocated funds to the goal.`,
+      });
+      setAllocationOpen(false);
+      resetForm(); // Reset allocation details
+       // Refresh saving goals to reflect the changes
+    } catch (error) {
+        if (error.response) {
+          console.log("Response data:", error.response.data); // Log specifics of the error response
+          toast({
+            variant: "destructive",
+            title: "Error!",
+            description: error.response.data.message || "Your Saving Goal wasn't created. Please try again.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Error!",
+            description: error.message || "Your Saving Goal wasn't created. Please try again.",
+          });
+        }
+    }
+  };
+
+  // Filter transactions for only savings category
+  const savingsTransactions = transactions.filter((txn) => txn.category === "Savings");
+
+  // Calculate total savings amount
+  const totalSavings = savingsTransactions.reduce((acc, txn) => acc + txn.amount, 0);
+  const totalAllocated = savingGoals.reduce((acc, goal) => acc + goal.initialAmount, 0);
+  const savingsRemaining = totalSavings - totalAllocated;
 
   return (
     <DashboardLayout>
@@ -92,30 +210,59 @@ const SavingsGoals = () => {
               <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">
-                        Income
+                        Savings Deposit
                     </CardTitle>
-                    <TrendingUp className="h-4 w-4 text-emerald-500" />
+                    <PiggyBank className="h-6 w-6 text-blue-500" />
                   </CardHeader>
                   <CardContent>
-                    <div className="text-2xl font-bold">GHS</div>
+                    <div className="text-2xl font-bold">GHS {totalSavings}</div>
+                    <div className="flex items-center text-xs text-emerald-500">
+                    </div>
+                  </CardContent>
+                </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Savings Allocated
+                    </CardTitle>
+                    <CgPushChevronRightR className="h-6 w-6 text-red-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">GHS {totalAllocated}</div>
+                    <div className="flex items-center text-xs text-emerald-500">
+                    </div>
+                  </CardContent>
+                </Card>
+              <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">
+                        Savings Remains
+                    </CardTitle>
+                    <FaSackDollar  className="h-6 w-6 text-emerald-500" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">GHS {savingsRemaining}</div>
                     <div className="flex items-center text-xs text-emerald-500">
                     </div>
                   </CardContent>
                 </Card>
             </div>
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
-            {goals.map((goal) => (
-              <Card key={goal._id}>
+            {savingGoals.map((goal) => (
+              <Card key={goal?._id}>
                 <CardHeader>
-                  <CardTitle>{goal.name}</CardTitle>
-                  <CardDescription>Target: GHS {goal.targetAmount.toFixed(2)}</CardDescription>
+                  <CardTitle>{goal.goalName}</CardTitle>
+                  <CardDescription>Target: GHS {goal.targetAmount?.toFixed(2)}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Progress value={(goal.currentAmount / goal.targetAmount) * 100} />
-                  <p className="text-xs font-medium text-[#6f5aa6]">Saved: GHS{goal.currentAmount.toFixed(2)}</p>
+                  <Progress value={(goal.initialAmount / goal.targetAmount) * 100} />
+                  <p className="text-xs font-medium text-[#6f5aa6]">Saved: GHS{goal.initialAmount?.toFixed(2)}</p>
                 </CardContent>
                 <CardFooter className="gap-2">
-                  <Button variant="outline" >
+                  <Button variant="outline" onClick={() => {
+                    setSelectedGoalId(goal.savingGoalId); // Store the goal id to allocate funds
+                    setAllocationOpen(true); // Open the allocation dialog
+                  }}>
                     <CgPushChevronRightR className="mr-2" /> Allocate
                   </Button>
                   <Button variant="outline" className="hover:bg-red-200" >
@@ -134,15 +281,36 @@ const SavingsGoals = () => {
           <DialogHeader>
             <DialogTitle>New Savings Goal</DialogTitle>
           </DialogHeader>
-          <form >
+          <form onSubmit={submitSavingGoal}>
             <Label>Name</Label>
             <Input value={goalName} onChange={(e) => setGoalName(e.target.value)} required />
-            <Label>Target Amount ($)</Label>
+            <Label>Target Amount (GHS)</Label>
             <Input type="number" value={targetAmount} onChange={(e) => setTargetAmount(e.target.value)} required />
-            <Label>Initial Amount ($) (Optional)</Label>
+            <Label>Initial Amount (GHS) (Optional)</Label>
             <Input type="number" value={initialAmount} onChange={(e) => setInitialAmount(e.target.value)} />
+            <div className="w-full">
+              <Label htmlFor="date">Date Due</Label>
+              <Input id="date" className="w-full" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
             <DialogFooter>
+              <Button variant="outline" onClick={() => setNewGoalOpen(false)}>Cancel</Button>
               <Button type="submit">Create Goal</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={allocationOpen} onOpenChange={setAllocationOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Allocate Funds</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAllocate}>
+            <Label>Amount to Allocate (GHS)</Label>
+            <Input type="number" value={allocationAmount} onChange={(e) => setAllocationAmount(e.target.value)} required />
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setAllocationOpen(false)}>Cancel</Button>
+              <Button type="submit">Allocate</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -151,4 +319,7 @@ const SavingsGoals = () => {
   );
 };
 
+
 export default SavingsGoals;
+
+

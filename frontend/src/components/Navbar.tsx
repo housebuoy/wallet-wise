@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-
-=======
->>>>>>> master
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -18,10 +14,7 @@ import {
   LogIn,
   UserPlus
 } from "lucide-react";
-<<<<<<< HEAD
-=======
 import logo from "../assets/logo.png";
->>>>>>> master
 
 export const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -36,31 +29,16 @@ export const Navbar = () => {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-<<<<<<< HEAD
-=======
             <img
               className="h-20 w-20"
               src={logo}
               alt="walletwise logo"
             />
->>>>>>> master
               <span className="text-2xl font-bold text-walletwise-purple">WalletWise</span>
             </Link>
           </div>
           
           <div className="hidden md:flex md:items-center md:space-x-4">
-<<<<<<< HEAD
-            <Link to="/" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-sm font-medium">
-              Home
-            </Link>
-            <Link to="/features" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-sm font-medium">
-              Features
-            </Link>
-            <Link to="/about" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-sm font-medium">
-              About Us
-            </Link>
-            <Link to="/contact" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-sm font-medium">
-=======
             <Link to="/" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-md font-medium">
               Home
             </Link>
@@ -71,27 +49,18 @@ export const Navbar = () => {
               About Us
             </Link>
             <Link to="/contact" className="text-gray-600 hover:text-walletwise-purple px-3 py-2 rounded-md text-md font-medium">
->>>>>>> master
               Contact
             </Link>
             <div className="flex items-center gap-2 ml-4">
               <Link to="/signup">
                 <Button variant="outline" className="flex items-center gap-2">
-<<<<<<< HEAD
-                  <UserPlus className="h-4 w-4" />
-=======
                   <UserPlus className="h-4 w-4 text-md" />
->>>>>>> master
                   Sign Up
                 </Button>
               </Link>
               <Link to="/login">
                 <Button className="flex items-center gap-2">
-<<<<<<< HEAD
-                  <LogIn className="h-4 w-4" />
-=======
                   <LogIn className="h-4 w-4 text-md" />
->>>>>>> master
                   Login
                 </Button>
               </Link>

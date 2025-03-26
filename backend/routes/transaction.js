@@ -1,5 +1,5 @@
 const express = require("express");
-const Transaction = require("../models/transactions");
+const Transaction = require("../models/Transactions");
 
 
 const router = express.Router();

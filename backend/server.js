@@ -16,9 +16,11 @@ connectDB();
 const userRoutes = require("./routes/userRoutes");
 const transactionRoutes = require("./routes/transaction");
 const budgetRoutes = require("./routes/budgetRoutes");
+const savingsRoutes = require("./routes/savingsRoutes");
 app.use("/api", userRoutes);
 app.use("/api/transactions", transactionRoutes);
 app.use("/api/budgets", budgetRoutes);
+app.use("/api/savings", savingsRoutes);
 
 
 // Start Server
