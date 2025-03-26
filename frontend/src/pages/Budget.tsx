@@ -165,7 +165,7 @@ const Budget = () => {
         date,
       };
     
-      const API_URL = "http://localhost:5000/api/budgets/";
+      const API_URL = "https://wallet-wise-x7ih.onrender.com/api/budgets/";
       await axios.post(API_URL, budgetData);
     
       toast({
@@ -195,7 +195,7 @@ const Budget = () => {
       
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/budgets/${user.uid}`);
+        const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/budgets/${user.uid}`);
         console.log(response.data);
         setBudgetBook(response.data || []); // Check the structure here
       } catch (error) {
@@ -224,7 +224,7 @@ const Budget = () => {
       const fetchTransactions = async () => {
         try {
           setIsLoading(true);
-          const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+          const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/transactions/${user.uid}`);
           const fetchedTransactions = response.data; // Set the fetched transactions
           setTransactions(fetchedTransactions);
           

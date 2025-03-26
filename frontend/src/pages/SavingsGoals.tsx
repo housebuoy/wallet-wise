@@ -9,10 +9,11 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/components/ui/use-toast";
 import AuthContext from "@/context/AuthContext";
-import { PiggyBank, Plus, Trash2, TrendingUp } from "lucide-react";
+import { PiggyBank, PiggyBankIcon, Plus, Trash2, TrendingUp } from "lucide-react";
 import { CgPushChevronRightR } from "react-icons/cg";
 import { FaSackDollar } from "react-icons/fa6";
 import { v4 as uuidv4 } from "uuid";
+import { Skeleton } from "@/components/ui/skeleton"
 
 import axios from "axios";
 
@@ -57,7 +58,7 @@ const SavingsGoals = () => {
       const fetchSavingGoals = async () => {
         try {
           setIsLoading(true);
-          const response = await axios.get(`http://localhost:5000/api/savings/${user.uid}`);
+          const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/savings/${user.uid}`);
           setSavingGoals(response.data); // Set the fetched transactions
           console.log("Fetched savings:", response.data);
         } catch (error) {
@@ -90,7 +91,7 @@ const SavingsGoals = () => {
     console.log("Saving Data to be sent:", savingGoalData);
   
     try {
-      const API_URL = "http://localhost:5000/api/savings";
+      const API_URL = "https://wallet-wise-x7ih.onrender.com/api/savings";
       const response = await axios.post(API_URL, savingGoalData, {
         headers: {
           'Content-Type': 'application/json' // Set content type
@@ -128,7 +129,7 @@ const SavingsGoals = () => {
     const fetchTransactions = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+        const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/transactions/${user.uid}`);
         setTransactions(response.data); 
         console.log("Fetched transactions:", response.data);
       } catch (error) {
@@ -162,7 +163,7 @@ const SavingsGoals = () => {
     };
     
     try {
-      const response = await axios.put(`http://localhost:5000/api/savings/${selectedGoalId}`, allocationData);
+      const response = await axios.put(`https://wallet-wise-x7ih.onrender.com/api/savings/${selectedGoalId}`, allocationData);
       toast({
         title: "Funds Allocated!",
         description: `You have successfully allocated funds to the goal.`,
@@ -199,13 +200,40 @@ const SavingsGoals = () => {
           </Button>
         </div>
 
-        {isLoading ? <p>Loading...</p> : error ? <p>Error loading goals</p> : goals.length === 0 ? (
+        {isLoading ? (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
+            <div className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-[250px] rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+            <div className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-[250px] rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+            <div className="flex flex-col space-y-3">
+              <Skeleton className="h-[125px] w-[250px] rounded-xl" />
+              <div className="space-y-2">
+                <Skeleton className="h-4 w-[250px]" />
+                <Skeleton className="h-4 w-[200px]" />
+              </div>
+            </div>
+          </div>
+        ) : error ? <p>Error loading goals</p> : goals.length === 0 ? (
           <div className="text-center mt-6">
             <PiggyBank className="h-16 w-16 mx-auto" />
             <p>No savings goals yet.</p>
           </div>
         ) : (
           <div className="">
+            <div className="w-full bg-yellow-200 mt-5 p-2 font-semibold text-slate-500 rounded-md flex items-center justify-center">
+              <p>NB: Savings Goals can only be created if there is some deposits from transactions with the category 'Services'</p>
+            </div>
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
               <Card>
                   <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -245,8 +273,21 @@ const SavingsGoals = () => {
                     <div className="flex items-center text-xs text-emerald-500">
                     </div>
                   </CardContent>
-                </Card>
+                </Card>                
             </div>
+            {
+              savingGoals.length === 0 && (
+                <div className="flex flex-col items-center justify-center w-full min-h-full pt-24 space-y-4">
+                  <PiggyBankIcon className="h-12 w-12 text-muted-foreground"/>
+                  <h1 className="text-lg font-semibold">No Saving Goal found</h1>
+                  <p className="text-sm text-muted-foreground">Add your first saving goal to get started.</p>
+                  <Button onClick={() => setNewGoalOpen(true)} className="flex-shrink-0">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add New Goal
+                    </Button>
+                </div>
+              ) 
+            }
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mt-6">
             {savingGoals.map((goal) => (
               <Card key={goal?._id}>

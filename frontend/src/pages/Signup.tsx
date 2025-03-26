@@ -54,7 +54,7 @@ export default function Signup() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
   
-    const API_URL = "http://localhost:5000/api/users";
+    const API_URL = "https://wallet-wise-x7ih.onrender.com/api/users";
     try {
       // Create user in Firebase Authentication
       const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
@@ -114,7 +114,7 @@ export default function Signup() {
           phoneNumber: user.phoneNumber || "",
         };
 
-        await axios.post("http://localhost:5000/api/users", userData);
+        await axios.post("https://wallet-wise-x7ih.onrender.com/api/users", userData);
     
         console.log("Google Signup User:", user);
     
@@ -150,7 +150,7 @@ export default function Signup() {
           phoneNumber: user.phoneNumber || "", 
         };
 
-        await axios.post("http://localhost:5000/api/users", userData);
+        await axios.post("https://wallet-wise-x7ih.onrender.com/api/users", userData);
 
         toast({
           title: "Welcome!",

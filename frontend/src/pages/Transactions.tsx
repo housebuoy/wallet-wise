@@ -45,7 +45,7 @@ const Transactions = () => {
     const fetchTransactions = async () => {
       try {
         setIsLoading(true);
-        const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+        const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/transactions/${user.uid}`);
         setTransactions(response.data); // Set the fetched transactions
       } catch (error) {
         console.error("Error fetching transactions:", error);
@@ -96,7 +96,7 @@ const Transactions = () => {
     console.log("Transaction Data to be sent:", transactionData);
   
     try {
-      const API_URL = "http://localhost:5000/api/transactions";
+      const API_URL = "https://wallet-wise-x7ih.onrender.com/api/transactions";
       const response = await axios.post(API_URL, transactionData, {
         headers: {
           'Content-Type': 'application/json' // Set content type

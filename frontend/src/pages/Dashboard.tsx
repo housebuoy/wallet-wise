@@ -48,7 +48,7 @@ const Dashboard = () => {
 
     const fetchTransactions = async () => {
       try {
-        const response = await axios.get(`http://localhost:5000/api/transactions/${user.uid}`);
+        const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/transactions/${user.uid}`);
         const fetchedTransactions = response.data; // Set the fetched transactions
         setTransactions(fetchedTransactions);
       
@@ -72,7 +72,7 @@ const Dashboard = () => {
     const fetchBudget = async () => {
       
       try {
-        const response = await axios.get(`http://localhost:5000/api/budgets/${user.uid}`);
+        const response = await axios.get(`https://wallet-wise-x7ih.onrender.com/api/budgets/${user.uid}`);
         console.log(response.data); // Check the structure here
         setBudgetBook(response.data || []);
       } catch (error) {
